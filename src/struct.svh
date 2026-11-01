@@ -3,13 +3,22 @@
 `include "enum.svh"
 
 typedef struct packed {
-	logic [4:0] rdAddr;
-	logic [31:0] rdData,srData,pc;
+	logic [31:0] srData,pc;
 	logic [11:0] srAddr;
 	WbuCsrOp csrOp;
-} PackWbM;typedef struct packed {logic valid;PackWbM data;}PipeWbM;
+} PackSr;
 typedef struct packed {
-	logic [4:0] rdAddr;
-	logic [31:0] rdData;
-} PackWbS;typedef struct packed {logic valid;PackWbS data;} PipeWbS;
+	logic [4:0] addr;
+	logic [31:0] data;
+} PackRd;
+typedef struct packed {
+	logic [1:0][31:0] rd;
+	logic [31:0] sr;
+	logic [1:0] valod;
+	logic [1:0][1:0] hit;
+} PackData;
+typedef struct packed {
+	logic [1:0][31:0] r1,r2;
+	logic [31:0] sr;
+} PackGprs;
 `endif
