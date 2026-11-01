@@ -21,4 +21,13 @@ typedef struct packed {
 	logic [1:0][31:0] r1,r2;
 	logic [31:0] sr;
 } PackGprs;
+typedef struct packed {
+	logic [31:2] pc;
+
+} Packid1Full;
+typedef struct packed {
+	logic [31:0] instr;
+	logic [31:2] pc;
+	InstrValid valid;
+} PackInstr;
 `endif

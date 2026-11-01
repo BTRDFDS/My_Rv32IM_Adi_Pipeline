@@ -18,6 +18,12 @@ interface ImmeData;
 	modport ex2( input addr,srAddr,output dataEx2);
 	modport lsu( input addr,srAddr,output dataLsu);
 	modport wbu( input addr,srAddr,output dataWbu,dataGprs);
-
 endinterface : ImmeData
+
+interface PipeIf2Id1;
+	PackInstr [1:0]data;
+	modport Id1( input data);
+	modport If2( output data);
+endinterface : PipeIf2Id1
+
 `endif
