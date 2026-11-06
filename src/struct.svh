@@ -32,12 +32,15 @@ typedef struct packed {
 } PackInstr;
 typedef struct packed {
 	Id2Imm imm;
-	Ex3Res res;
-	Ex1Bj bj;
-	Ex1Al al;
-	Ex2Size size;
 	logic r1,r2,rd;
 	logic in1IsPc,in2IsImm;
-	logic load,store,sext;
+	Ex1Bj bj;
+	Ex1Al al;
+	Ex1Csr csr;
+	Ex2Size size;
+	Ex3Res res;
+	logic ls,div;
+	logic attrA,attrB,fence;
+	WbuCsrOp wbuCsr;
 } PackIdFull;
 `endif
