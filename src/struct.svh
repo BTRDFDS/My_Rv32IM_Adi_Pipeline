@@ -48,5 +48,13 @@ typedef struct packed {
 	Ex3Res res;
 	logic attrA,attrB,fence;
 	WbuCsrOp wbuCsr;
-} PackIdFull;
+	logic valid;
+	logic [31:2] pc;
+} PackId1Full;
+typedef struct packed {
+	Id2Imm imm;
+	logic r1,r2,rd;
+	logic in1IsPc,in2IsImm;
+	Ex1Al al;
+} PackId1Lite;
 `endif
