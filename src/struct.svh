@@ -30,6 +30,13 @@ typedef struct packed {
 	logic [31:2] pc;
 	InstrValid valid;
 } PackInstr;
+// attrA / attrB：跨指令类复用的一对控制位。一条指令只属于一个类，每个消费方必须用自己的使能门控。
+//   M 类 : attrA = 被乘数/被除数有符号，attrB = 乘数/除数有符号
+//          （MUL 0/0，MULH 1/1，MULHSU 1/0，MULHU 0/0，DIV/REM 1/1，DIVU/REMU 0/0）
+//   访存 : attrB = 0 读(load) / 1 写(store)；attrA 只在 load 时表示是否符号扩展
+//   自陷 : imm_T 时 attrB = 0 ecall / 1 ebreak
+//   错误 : imm_E 时 attrA = 1 非法指令（0 = 取指问题），attrB = 0 取指访问错误 / 1 地址不对齐
+// Ex3Res_Mem：load 与 store 共用（store 靠 rd=0 不写回），它同时是访存单元的启动信号。
 typedef struct packed {
 	Id2Imm imm;
 	logic r1,r2,rd;
@@ -39,7 +46,6 @@ typedef struct packed {
 	Ex1Csr csr;
 	Ex2Size size;
 	Ex3Res res;
-	logic ls,div;
 	logic attrA,attrB,fence;
 	WbuCsrOp wbuCsr;
 } PackIdFull;
