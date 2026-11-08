@@ -38,6 +38,8 @@ typedef struct packed {
 //   错误 : imm_E 时 attrA = 1 非法指令（0 = 取指问题），attrB = 0 取指访问错误 / 1 地址不对齐
 // Ex3Res_Mem：load 与 store 共用（store 靠 rd=0 不写回），它同时是访存单元的启动信号。
 typedef struct packed {
+	logic valid;
+	logic [31:2] pc;
 	Id2Imm imm;
 	logic r1,r2,rd;
 	logic in1IsPc,in2IsImm;
@@ -48,8 +50,6 @@ typedef struct packed {
 	Ex3Res res;
 	logic attrA,attrB,fence;
 	WbuCsrOp wbuCsr;
-	logic valid;
-	logic [31:2] pc;
 } PackId1Full;
 typedef struct packed {
 	Id2Imm imm;
