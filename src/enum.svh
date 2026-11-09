@@ -2,7 +2,8 @@
 `define _ENUM_SVH_
 
 typedef enum logic[1:0] {WbuCsrOp_Null,WbuCsrOp_Write,WbuCsrOp_Trap,WbuCsrOp_Ret} WbuCsrOp;
-typedef enum logic[1:0] {InstrValid_Idle,InstrValid_Valid,InstrValid_Fall,InstrValid_Un4b} InstrValid;
+typedef enum logic[1:0] {Id1Valid_Idle,Id1Valid_Valid,Id1Valid_Fall,Id1Valid_Un4b} Id1Valid;
+typedef enum logic[1:0] {Id1Ready_0,Id1Ready_1,Id1Ready_2} Id1Ready;
 
 typedef enum logic[2:0] {Id2Imm_E,Id2Imm_I,Id2Imm_S,Id2Imm_B,Id2Imm_U,Id2Imm_J,Id2Imm_C,Id2Imm_T} Id2Imm;
 typedef enum logic[2:0] {Ex3Res_Alu,Ex3Res_Mul,Ex3Res_Mulh,Ex3Res_Div,Ex3Res_Rem,Ex3Res_Mem} Ex3Res;

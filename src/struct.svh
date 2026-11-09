@@ -22,14 +22,9 @@ typedef struct packed {
 	logic [31:0] sr;
 } PackGprs;
 typedef struct packed {
-	logic [31:2] pc;
-
-} Packid1Full;
-typedef struct packed {
 	logic [31:0] instr;
 	logic [31:2] pc;
-	InstrValid valid;
-} PackInstr;
+} PackInstr;typedef struct packed {Id1Valid valid;PackInstr data;} PipeInstr;
 // attrA / attrB：跨指令类复用的一对控制位。一条指令只属于一个类，每个消费方必须用自己的使能门控。
 //   M 类 : attrA = 被乘数/被除数有符号，attrB = 乘数/除数有符号
 //          （MUL 0/0，MULH 1/1，MULHSU 1/0，MULHU 0/0，DIV/REM 1/1，DIVU/REMU 0/0）
@@ -38,8 +33,6 @@ typedef struct packed {
 //   错误 : imm_E 时 attrA = 1 非法指令（0 = 取指问题），attrB = 0 取指访问错误 / 1 地址不对齐
 // Ex3Res_Mem：load 与 store 共用（store 靠 rd=0 不写回），它同时是访存单元的启动信号。
 typedef struct packed {
-	logic valid;
-	logic [31:2] pc;
 	Id2Imm imm;
 	logic r1,r2,rd;
 	logic in1IsPc,in2IsImm;
@@ -50,11 +43,9 @@ typedef struct packed {
 	Ex3Res res;
 	logic attrA,attrB,fence;
 	WbuCsrOp wbuCsr;
-} PackId1Full;
+} PackId1Full;typedef struct packed {logic valid;logic [31:2] pc;PackId1Full data;} PipeId1Full;
 typedef struct packed {
-	Id2Imm imm;
 	logic r1,r2,rd;
-	logic in1IsPc,in2IsImm;
 	Ex1Al al;
-} PackId1Lite;
+} PackId1Lite;typedef struct packed {logic valid;PackId1Lite data;} PipeId1Lite;
 `endif

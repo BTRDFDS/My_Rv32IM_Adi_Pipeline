@@ -21,9 +21,17 @@ interface ImmeData;
 endinterface : ImmeData
 
 interface PipeIf2Id1;
-	PackInstr [1:0]data;
-	modport Id1( input data);
-	modport If2( output data);
+	PipeInstr [1:0]data;
+	Id1Ready ready;
+	modport Id1( input data,output ready);
+	modport If2(output data, input ready);
 endinterface : PipeIf2Id1
+interface PipeId1Id2;
+	PipeId1Full dataFull;
+	PipeId1Lite dataLite;
+	logic ready;
+	modport Id2( input dataFull,dataLite,output ready);
+	modport Id1(output dataFull,dataLite, input ready);
+endinterface : PipeId1Id2
 
 `endif
