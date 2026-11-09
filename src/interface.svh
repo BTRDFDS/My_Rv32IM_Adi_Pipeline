@@ -36,7 +36,7 @@ endinterface : PipeId1Id2
 interface PipeId2Ex1;
 	PipeId2Full dataFull;
 	PipeId2Lite dataLite;
-	logic ready;
+	logic [1:0]ready;
 	logic [1:0]r1Valid;
 	logic [1:0]r2Valid;
 	logic [1:0][4:0]r1Addr;

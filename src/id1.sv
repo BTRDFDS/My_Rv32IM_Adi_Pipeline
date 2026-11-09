@@ -61,9 +61,9 @@ module Id1Full (
 		34'b01???????_?????_?????_110_?????_1110011:out.data=PackId1Full'{Id2Imm_C		,'0,'0,'1,'0,'1	,Ex1Bj_Null	,Ex1Al_Imm	,Ex1Csr_S	,Ex2Size'('x)	,Ex3Res_Alu	,'x,'x,'0,WbuCsrOp_Write};//CSRRSI
 		34'b01???????_?????_?????_111_?????_1110011:out.data=PackId1Full'{Id2Imm_C		,'0,'0,'1,'0,'1	,Ex1Bj_Null	,Ex1Al_Imm	,Ex1Csr_C	,Ex2Size'('x)	,Ex3Res_Alu	,'x,'x,'0,WbuCsrOp_Write};//CSRRCI
 		34'b00???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm'('x)	,'x,'x,'x,'x,'x	,Ex1Bj'('x)	,Ex1Al'('x)	,Ex1Csr'('x),Ex2Size'('x)	,Ex3Res'('x),'x,'x,'x,WbuCsrOp'('x)	};//idle
-		34'b10???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm_E		,'0,'0,'0,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'0,'1,'0,WbuCsrOp_Trap	};//fall
-		34'b11???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm_E		,'0,'0,'0,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'0,'1,'0,WbuCsrOp_Trap	};//un4b
-		default									   :out.data=PackId1Full'{Id2Imm_E		,'0,'0,'0,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'1,'0,'0,WbuCsrOp_Trap	};//illegal
+		34'b10???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm_E		,'0,'0,'x,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'0,'1,'0,WbuCsrOp_Trap	};//fall
+		34'b11???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm_E		,'0,'0,'x,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'0,'1,'0,WbuCsrOp_Trap	};//un4b
+		default									   :out.data=PackId1Full'{Id2Imm_E		,'0,'0,'x,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'1,'0,'0,WbuCsrOp_Trap	};//illegal
 	endcase
 	assign out.pc	= in.data.pc;
 	assign out.valid= in.valid!=Id1Valid_Idle;
@@ -93,7 +93,7 @@ module Id1Lite(
 		34'b010100000_?????_?????_101_?????_0110011:begin out.data=PackId1Lite'{'1,'1,'1,Ex1Al_Sra	};out.valid='1;end//SRA
 		34'b010000000_?????_?????_110_?????_0110011:begin out.data=PackId1Lite'{'1,'1,'1,Ex1Al_Or	};out.valid='1;end//OR
 		34'b010000000_?????_?????_111_?????_0110011:begin out.data=PackId1Lite'{'1,'1,'1,Ex1Al_And	};out.valid='1;end//AND
-		default									   :begin out.data=PackId1Lite'{'x,'x,'x,Ex1Al'('x)	};out.valid='0;end//unsupported
+		default									   :begin out.data=PackId1Lite'{'0,'0,'x,Ex1Al'('x)	};out.valid='0;end//unsupported
 	endcase
 	assign out.instr = in.data.instr[31:7];
 endmodule
@@ -104,11 +104,13 @@ module Id1(
 );
 	PackInstr [1:0] data;
 	Id1Valid [1:0]valid;
-	always_ff@(posedge clk) valid[0]<=rst?Id1Valid_Idle:pipeIf2Id1.data[0].valid;
-	always_ff@(posedge clk) valid[1]<=rst?Id1Valid_Idle:pipeIf2Id1.data[1].valid;
-	always_ff@(posedge clk) data[0] <= pipeIf2Id1.data[0].data;
-	always_ff@(posedge clk) data[1] <= pipeIf2Id1.data[1].data;
+	logic pipeReady;
+	always_ff@(posedge clk)if(pipeReady||rst)valid[0]<=rst?Id1Valid_Idle:pipeIf2Id1.data[0].valid;
+	always_ff@(posedge clk)if(pipeReady||rst)valid[1]<=rst?Id1Valid_Idle:pipeIf2Id1.data[1].valid;
+	always_ff@(posedge clk)if(pipeReady)data[0] <= pipeIf2Id1.data[0].data;
+	always_ff@(posedge clk)if(pipeReady)data[1] <= pipeIf2Id1.data[1].data;
 	Id1Full id1Full(PipeInstr'{valid[0],data[0]},pipeId1Id2.dataFull);
 	Id1Lite id1Lite(PipeInstr'{valid[1],data[1]},pipeId1Id2.dataLite);
-	assign pipeIf2Id1.ready = pipeId1Id2.ready?(pipeId1Id2.dataLite.valid?Id1Ready_2:Id1Ready_1):Id1Ready_0;
+	assign pipeIf2Id1.ready = pipeId1Id2.ready?((pipeId1Id2.dataLite.valid || valid[1]==Id1Valid_Idle)?Id1Ready_2:Id1Ready_1):Id1Ready_0;
+	assign pipeReady = pipeId1Id2.ready;
 endmodule

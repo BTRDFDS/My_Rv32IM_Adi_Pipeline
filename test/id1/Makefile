@@ -4,7 +4,7 @@ INC       := -I$(SRC)
 VFLAGS    := --binary --timing -Wno-fatal $(INC)
 BUILD     := build
 
-.PHONY: all lint full lite top clean
+.PHONY: all lint full lite top wave clean
 
 all: lint full lite top
 
@@ -31,6 +31,12 @@ lite: | $(BUILD)
 top: | $(BUILD)
 	$(VERILATOR) $(VFLAGS) --top-module tb_top tb_top.sv $(SRC)/id1.sv --Mdir $(BUILD)/top -o tb_top
 	./$(BUILD)/top/tb_top
+
+# 波形：结构体字段可见（--trace-structs）
+wave: | $(BUILD)
+	$(VERILATOR) $(VFLAGS) --trace --trace-structs --public-flat-rw --timescale "1ns/1ps" --top-module tb_wave tb_wave.sv $(SRC)/id1.sv --Mdir $(BUILD)/wave -o tb_wave
+	./$(BUILD)/wave/tb_wave
+	@echo "波形: $(BUILD)/wave/wave.vcd"
 
 clean:
 	rm -rf $(BUILD)
