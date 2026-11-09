@@ -65,8 +65,9 @@ module Id1Full (
 		34'b11???????_?????_?????_???_?????_???????:out.data=PackId1Full'{Id2Imm_E		,'0,'0,'0,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'0,'1,'0,WbuCsrOp_Trap	};//un4b
 		default									   :out.data=PackId1Full'{Id2Imm_E		,'0,'0,'0,'x,'x	,Ex1Bj_Null	,Ex1Al'('x)	,Ex1Csr_I	,Ex2Size'('x)	,Ex3Res_Alu	,'1,'0,'0,WbuCsrOp_Trap	};//illegal
 	endcase
-	assign out.pc =  in.data.pc;
-	assign out.valid = in.valid!=Id1Valid_Idle;
+	assign out.pc	= in.data.pc;
+	assign out.valid= in.valid!=Id1Valid_Idle;
+	assign out.instr= in.data.instr[31:7];
 endmodule
 module Id1Lite(
 	input PipeInstr in,
@@ -94,6 +95,7 @@ module Id1Lite(
 		34'b010000000_?????_?????_111_?????_0110011:begin out.data=PackId1Lite'{'1,'1,'1,Ex1Al_And	};out.valid='1;end//AND
 		default									   :begin out.data=PackId1Lite'{'x,'x,'x,Ex1Al'('x)	};out.valid='0;end//unsupported
 	endcase
+	assign out.instr = in.data.instr[31:7];
 endmodule
 module Id1(
 	input logic clk,rst,

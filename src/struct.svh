@@ -43,9 +43,28 @@ typedef struct packed {
 	Ex3Res res;
 	logic attrA,attrB,fence;
 	WbuCsrOp wbuCsr;
-} PackId1Full;typedef struct packed {logic valid;logic [31:2] pc;PackId1Full data;} PipeId1Full;
+} PackId1Full;typedef struct packed {logic valid;logic [31:2] pc;logic [31:7] instr;PackId1Full data;} PipeId1Full;
 typedef struct packed {
 	logic r1,r2,rd;
 	Ex1Al al;
-} PackId1Lite;typedef struct packed {logic valid;PackId1Lite data;} PipeId1Lite;
+} PackId1Lite;typedef struct packed {logic valid;logic [31:7] instr;PackId1Lite data;} PipeId1Lite;
+typedef struct packed {
+	Id2Imm imm;
+	logic [31:0]r1,r2;
+	logic [4:0]rd;
+	logic in1IsPc,in2IsImm;
+	Ex1Bj bj;
+	Ex1Al al;
+	Ex1Csr csr;
+	Ex2Size size;
+	Ex3Res res;
+	logic attrA,attrB,fence;
+	WbuCsrOp wbuCsr;
+	logic [31:2] pc;
+} PackId2Full;typedef struct packed {logic valid;PackId1Full data;} PipeId2Full;
+typedef struct packed {
+	logic [31:0]r1,r2;
+	logic [4:0]rd;
+	Ex1Al al;
+} PackId2Lite;typedef struct packed {logic valid;PackId1Lite data;} PipeId2Lite;
 `endif
