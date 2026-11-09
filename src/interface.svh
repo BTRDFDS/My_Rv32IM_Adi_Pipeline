@@ -33,5 +33,20 @@ interface PipeId1Id2;
 	modport Id2( input dataFull,dataLite,output ready);
 	modport Id1(output dataFull,dataLite, input ready);
 endinterface : PipeId1Id2
+interface PipeId2Ex1;
+	PipeId2Full dataFull;
+	PipeId2Lite dataLite;
+	logic ready;
+	logic [1:0]r1Valid;
+	logic [1:0]r2Valid;
+	logic [1:0][4:0]r1Addr;
+	logic [1:0][4:0]r2Addr;
+	logic [1:0][31:0]r1Data;
+	logic [1:0][31:0]r2Data;
+	logic [11:0]csrAddr;
+	logic [31:0]csrData;
+	modport Ex1( input dataFull,dataLite,r1Addr,r2Addr,csrAddr,output ready,r1Valid,r2Valid,r1Data,r2Data,csrData);
+	modport Id2(output dataFull,dataLite,r1Addr,r2Addr,csrAddr, input ready,r1Valid,r2Valid,r1Data,r2Data,csrData);
+endinterface : PipeId2Ex1
 
 `endif
