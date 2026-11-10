@@ -20,12 +20,12 @@ interface ImmeData;
 	modport wbu( input addr,srAddr,output dataWbu,dataGprs);
 endinterface : ImmeData
 
-interface PipeIf2Id1;
+interface PipeIfbId1;
 	PipeInstr [1:0]data;
 	Id1Ready ready;
 	modport Id1( input data,output ready);
-	modport If2(output data, input ready);
-endinterface : PipeIf2Id1
+	modport Ifb(output data, input ready);
+endinterface : PipeIfbId1
 interface PipeId1Id2;
 	PipeId1Full dataFull;
 	PipeId1Lite dataLite;

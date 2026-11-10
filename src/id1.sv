@@ -99,18 +99,19 @@ module Id1Lite(
 endmodule
 module Id1(
 	input logic clk,rst,
-	PipeIf2Id1.Id1 pipeIf2Id1,
-	PipeId1Id2.Id1 pipeId1Id2
+	PipeIfbId1.Id1 ifb,
+	PipeId1Id2.Id1 id2
 );
-	PackInstr [1:0] data;
-	Id1Valid [1:0]valid;
+	PipeInstr [1:0] instr;
+	// PackInstr [1:0] data;
+	// Id1Valid [1:0]valid;
 	logic pipeReady;
-	always_ff@(posedge clk)if(pipeReady||rst)valid[0]<=rst?Id1Valid_Idle:pipeIf2Id1.data[0].valid;
-	always_ff@(posedge clk)if(pipeReady||rst)valid[1]<=rst?Id1Valid_Idle:pipeIf2Id1.data[1].valid;
-	always_ff@(posedge clk)if(pipeReady)data[0] <= pipeIf2Id1.data[0].data;
-	always_ff@(posedge clk)if(pipeReady)data[1] <= pipeIf2Id1.data[1].data;
-	Id1Full id1Full(PipeInstr'{valid[0],data[0]},pipeId1Id2.dataFull);
-	Id1Lite id1Lite(PipeInstr'{valid[1],data[1]},pipeId1Id2.dataLite);
-	assign pipeIf2Id1.ready = (pipeId1Id2.ready && pipeId1Id2.dataFull.valid)?((pipeId1Id2.dataLite.valid)?Id1Ready_2:Id1Ready_1):Id1Ready_0;
-	assign pipeReady = pipeId1Id2.ready;
+	always_ff@(posedge clk)if(pipeReady||rst)instr[0].valid<=rst?Id1Valid_Idle:ifb.data[0].valid;
+	always_ff@(posedge clk)if(pipeReady||rst)instr[1].valid<=rst?Id1Valid_Idle:ifb.data[1].valid;
+	always_ff@(posedge clk)if(pipeReady)instr[0].data <= ifb.data[0].data;
+	always_ff@(posedge clk)if(pipeReady)instr[1].data <= ifb.data[1].data;
+	Id1Full id1Full(instr[0],id2.dataFull);
+	Id1Lite id1Lite(instr[1],id2.dataLite);
+	assign ifb.ready = (id2.ready && id2.dataFull.valid)?((id2.dataLite.valid)?Id1Ready_2:Id1Ready_1):Id1Ready_0;
+	assign pipeReady = id2.ready;
 endmodule
