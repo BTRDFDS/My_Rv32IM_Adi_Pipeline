@@ -60,7 +60,7 @@ module tb_id2;
 		i2x.r1Valid[0] = 1'b0;
 		setpkt(32'h0053_0293, Id2Imm_I, 1'b1, 1'b0, 1'b1, 1'b1);
 		i12.dataLite.valid = 1'b1;
-		i12.dataLite.instr = 32'h0000_0093 >> 7;
+		i12.dataLite.instr = 25'h1;
 		i12.dataLite.data  = '0;
 		@(posedge clk); #1;
 		chk(i2x.dataLite.valid === 1'b0, "槽0 未就绪时 lite 不得发射");
@@ -92,8 +92,7 @@ module tb_id2;
 		@(posedge clk); #1;
 		chk(i2x.dataFull.data.rd === 5'd8, "解除阻塞后前进");
 
-		if (err == 0) $display("tb_id2: ALL OK");
-		else          $display("tb_id2: %0d FAIL", err);
+		if (err != 0) $display("tb_id2: %0d FAIL", err);
 		$finish;
 	end
 endmodule

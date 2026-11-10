@@ -77,8 +77,7 @@ module tb_full;
 			end
 		end
 
-		if (err == 0) $display("tb_full: ALL OK");
-		else          $display("tb_full: %0d FAIL", err);
+		if (err != 0) $display("tb_full: %0d FAIL", err);
 		$finish;
 	end
 endmodule

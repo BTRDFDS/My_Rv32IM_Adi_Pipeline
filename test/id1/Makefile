@@ -34,7 +34,7 @@ top: | $(BUILD)
 
 # 波形：结构体字段可见（--trace-structs）
 wave: | $(BUILD)
-	$(VERILATOR) $(VFLAGS) --trace --trace-structs --public-flat-rw --timescale "1ns/1ps" --top-module tb_wave tb_wave.sv $(SRC)/id1.sv --Mdir $(BUILD)/wave -o tb_wave
+	$(VERILATOR) $(VFLAGS) --trace-fst --trace-structs --public-flat-rw --timescale "1ms/1ms" --top-module tb_wave tb_wave.sv $(SRC)/id1.sv --Mdir $(BUILD)/wave -o tb_wave
 	./$(BUILD)/wave/tb_wave
 	@echo "波形: $(BUILD)/wave/wave.vcd"
 
