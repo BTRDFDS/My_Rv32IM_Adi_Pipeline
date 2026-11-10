@@ -111,6 +111,6 @@ module Id1(
 	always_ff@(posedge clk)if(pipeReady)data[1] <= pipeIf2Id1.data[1].data;
 	Id1Full id1Full(PipeInstr'{valid[0],data[0]},pipeId1Id2.dataFull);
 	Id1Lite id1Lite(PipeInstr'{valid[1],data[1]},pipeId1Id2.dataLite);
-	assign pipeIf2Id1.ready = pipeId1Id2.ready?((pipeId1Id2.dataLite.valid || valid[1]==Id1Valid_Idle)?Id1Ready_2:Id1Ready_1):Id1Ready_0;
-	assign pipeReady = pipeId1Id2.ready;
+	assign pipeIf2Id1.ready = (pipeId1Id2.ready && pipeId1Id2.dataFull.valid)?((pipeId1Id2.dataLite.valid)?Id1Ready_2:Id1Ready_1):Id1Ready_0;
+	assign pipeReady = pipeId1Id2.ready || (~pipeId1Id2.dataFull.valid && ~pipeId1Id2.dataLite.valid);
 endmodule
