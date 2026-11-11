@@ -5,7 +5,7 @@ module tb_id2;
 	logic clk = 0, rst = 1;
 	PipeId1Id2 i12();
 	PipeId2Ex1 i2x();
-	Id2 dut(.clk(clk), .rst(rst), .pipeId1Id2(i12), .pipeId2Ex(i2x));
+	Id2 dut(.clk(clk), .rst(rst), .id1(i12), .ex1(i2x));
 
 	int err = 0;
 	always #5 clk = ~clk;
@@ -92,7 +92,8 @@ module tb_id2;
 		@(posedge clk); #1;
 		chk(i2x.dataFull.data.rd === 5'd8, "解除阻塞后前进");
 
-		if (err != 0) $display("tb_id2: %0d FAIL", err);
+		if (err == 0) $display("tb_id2: OK");
+		else          $display("tb_id2: %0d FAIL", err);
 		$finish;
 	end
 endmodule

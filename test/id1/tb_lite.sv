@@ -81,7 +81,8 @@ module tb_lite;
 			end
 		end
 
-		if (err != 0) $display("tb_lite: %0d FAIL", err);
+		if (err == 0) $display("tb_lite: OK");
+		else          $display("tb_lite: %0d FAIL", err);
 		$finish;
 	end
 endmodule

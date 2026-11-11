@@ -28,9 +28,10 @@ interface PipeIf2Ifb;
 endinterface : PipeIf2Ifb
 interface PipeIfbId1;
 	PipeInstr [1:0]instr;
-	Id1Ready ready;
-	modport Id1( input instr,output ready);
-	modport Ifb(output instr, input ready);
+	// Id1Ready ready;
+	logic [1:0] consume;
+	modport Id1( input instr,output consume);
+	modport Ifb(output instr, input consume);
 endinterface : PipeIfbId1
 interface PipeId1Id2;
 	PipeId1Full dataFull;

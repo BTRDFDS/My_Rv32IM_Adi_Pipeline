@@ -36,7 +36,7 @@ top: | $(BUILD)
 wave: | $(BUILD)
 	$(VERILATOR) $(VFLAGS) --trace-fst --trace-structs --public-flat-rw --timescale "1ms/1ms" --top-module tb_wave tb_wave.sv $(SRC)/id1.sv --Mdir $(BUILD)/wave -o tb_wave
 	./$(BUILD)/wave/tb_wave
-	@echo "波形: $(BUILD)/wave/wave.vcd"
+	@echo "波形: $(BUILD)/wave/wave.fst"
 
 clean:
 	rm -rf $(BUILD)
