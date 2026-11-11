@@ -13,11 +13,12 @@ module Id2(
     PipeId1Full id1Full;
     PipeId1Lite id1Lite;
 	logic [1:0]pipeReady;
-	always_ff@(posedge clk)if(pipeReady[0]||rst)id1Full.valid<=id1.dataFull.valid && !rst &&pipeReady[1];
+	assign id1.flush = ex1.flush;
+	always_ff@(posedge clk)if(pipeReady[0] || rst || ex1.flush)id1Full.valid<=id1.dataFull.valid && !rst && !ex1.flush &&pipeReady[1];
 	always_ff@(posedge clk)if(pipeReady[0])id1Full.instr<=id1.dataFull.instr;
 	always_ff@(posedge clk)if(pipeReady[0])id1Full.pc   <=id1.dataFull.pc;
 	always_ff@(posedge clk)if(pipeReady[0])id1Full.data	<=id1.dataFull.data;
-	always_ff@(posedge clk)if(pipeReady[1]||rst)id1Lite.valid<=id1.dataLite.valid && !rst;
+	always_ff@(posedge clk)if(pipeReady[1]|| rst || ex1.flush)id1Lite.valid<=id1.dataLite.valid && !rst && !ex1.flush;
 	always_ff@(posedge clk)if(pipeReady[1])id1Lite.instr<=id1.dataLite.instr;
 	always_ff@(posedge clk)if(pipeReady[1])id1Lite.data	<=id1.dataLite.data;
 
@@ -51,8 +52,9 @@ module Id2(
 	endcase
 
 	assign ex1.dataFull.data.rd = id1Full.instr[11:7] & {5{id1Full.data.rd}};
-	assign ex1.r1Addr[0] = id1Full.instr[19:15];
-	assign ex1.r2Addr[0] = id1Full.instr[24:20];
+	assign ex1.r1Addr[0]= id1Full.instr[19:15];
+	assign ex1.r2Addr[0]= id1Full.instr[24:20];
+	assign ex1.csrAddr	= id1Full.instr[31:20];
 	assign ex1.dataFull.data.r1 = ex1.r1Data[0] & {32{|ex1.r1Addr[0]}};
 	assign ex1.dataFull.data.r2 = ex1.r2Data[0] & {32{|ex1.r2Addr[0]}};
 	logic regValidFull;assign regValidFull=(ex1.r1Valid[0] || !id1Full.data.r1 || ~(|ex1.r1Addr[0])) && (ex1.r2Valid[0] || !id1Full.data.r2 || ~(|ex1.r2Addr[0]));

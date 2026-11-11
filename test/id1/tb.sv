@@ -348,6 +348,25 @@ module tb;
 		end
 		loadq(25, 7);  repeat (8) @(negedge clk);
 
+		// ===== flush：下游冲刷，ID1 清寄存器并转发给 IFB =====
+		phase = 15;
+		for (int i = 0; i < 6; i++) begin
+			qi[i] = 32'h0000_0033 | ((i & 31) << 20); qp[i] = 30'(32'h1200_0000 + i);
+		end
+		loadq(15, 6);
+		repeat (2) @(negedge clk);
+		chk(dut.instr[0].valid != Id1Valid_Idle, "flush 前寄存器应有指令",
+		    $sformatf("v0=%b", dut.instr[0].valid));
+		id2.flush = 1'b1;
+		@(posedge clk); #1;
+		chk(ifb.flush === 1'b1, "flush 应转发给 IFB", $sformatf("ifb.flush=%b", ifb.flush));
+		chk(dut.instr[0].valid === Id1Valid_Idle && dut.instr[1].valid === Id1Valid_Idle,
+		    "flush 后寄存器应为空",
+		    $sformatf("v=(%b,%b)", dut.instr[0].valid, dut.instr[1].valid));
+		@(negedge clk); #1;
+		id2.flush = 1'b0; #1;
+		chk(ifb.flush === 1'b0, "flush 撤销后应回到 0", $sformatf("ifb.flush=%b", ifb.flush));
+
 		phase = 0;
 		repeat (2) @(negedge clk);
 		$display("tb: OK（波形 build/wave/id1.fst）");

@@ -25,6 +25,23 @@ module tb;
 		i12.dataFull.data.rd  = rd;
 	endtask
 
+	// 结构检查：这些是 Id2 必须驱动的输出，未驱动会一直保持 X
+	always @(negedge clk) if (!rst) begin
+		if ($isunknown(i2x.csrAddr)) begin
+			$display("FAIL[t=%0t] ex1.csrAddr 未驱动（X）：Id2 没有连接这个接口输出", $time);
+			$fatal(1);
+		end
+		if ($isunknown(i2x.r1Addr[0]) || $isunknown(i2x.r2Addr[0]) ||
+		    $isunknown(i2x.r1Addr[1]) || $isunknown(i2x.r2Addr[1])) begin
+			$display("FAIL[t=%0t] r1Addr/r2Addr 未驱动（X）", $time);
+			$fatal(1);
+		end
+		if ($isunknown(i12.ready)) begin
+			$display("FAIL[t=%0t] id1.ready 未驱动（X）", $time);
+			$fatal(1);
+		end
+	end
+
 	task automatic chk(input bit ok, input string nm, input string got);
 		if (!ok) begin
 			$display("FAIL[t=%0t phase=%0d] %s", $time, phase, nm);
@@ -158,7 +175,8 @@ module tb;
 		i12.dataFull.data.csr    = Ex1Csr_W;      // 模拟 ID1 的译码结果
 		i12.dataFull.data.wbuCsr = WbuCsrOp_Write;
 		repeat (2) waitclk();
-		// 注：ex1.csrAddr 目前 Id2 未驱动（接口声明为 Id2 输出），等 RTL 补上后再加检查
+		chk(i2x.csrAddr === 12'h300, "CSR 地址错误",
+		    $sformatf("csrAddr=%h 期望 300", i2x.csrAddr));
 		chk(i2x.dataFull.data.imm === 32'hdead_beef, "CSR 指令的 imm 应取 csrData",
 		    $sformatf("imm=%h 期望 deadbeef", i2x.dataFull.data.imm));
 
@@ -191,6 +209,22 @@ module tb;
 		chk(i2x.dataLite.valid === 1'b1, "槽1 应能发射", $sformatf("valid=%b", i2x.dataLite.valid));
 		i2x.r1Valid = 2'b11;
 		i12.dataLite = '0;
+
+		// 15) flush：EX1 冲刷，Id2 必须清寄存器并转发给 ID1（且优先于 ready=0）
+		phase = 15;
+		i2x.ready = 2'b00;
+		setpkt(32'h0053_0293, Id2Imm_I, 1'b1, 1'b0, 1'b1, 1'b1);
+		repeat (2) waitclk();
+		i2x.flush = 1'b1;
+		waitclk();
+		chk(i12.flush === 1'b1, "flush 应转发给 ID1",
+		    $sformatf("id1.flush=%b", i12.flush));
+		chk(i2x.dataFull.valid === 1'b0, "flush 后 full.valid 应为 0",
+		    $sformatf("valid=%b", i2x.dataFull.valid));
+		chk(i2x.dataLite.valid === 1'b0, "flush 后 lite.valid 应为 0",
+		    $sformatf("valid=%b", i2x.dataLite.valid));
+		i2x.flush = 1'b0;
+		i2x.ready = 2'b11;
 
 		phase = 0;
 		repeat (2) @(negedge clk);

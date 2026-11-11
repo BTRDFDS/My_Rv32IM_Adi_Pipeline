@@ -17,7 +17,7 @@ module tb;
 	logic [31:0] ins[N];
 	logic [31:2] pcv[N];
 	int n = 0, pw = 0, pr = 0, phase = 0, cyc = 0;
-	int stall_at = 0, bub_at = 0, one_at = 0, rst_at = 0;
+	int stall_at = 0, bub_at = 0, one_at = 0, rst_at = 0, fl_at = 0;
 
 	always #5 clk = ~clk;
 
@@ -63,14 +63,14 @@ module tb;
 
 	always @(posedge clk) if (!rst) begin
 		cyc++;
-		if (dut.pipeReady && dut.instr[0].valid != Id1Valid_Idle && !dut.fifoWvalid) begin
+		if (if2.ready && dut.instr[0].valid != Id1Valid_Idle && !dut.fifoWvalid) begin
 			$display("FAIL[t=%0t phase=%0d] 握手违例：pipeReady(=if2.ready)=1 但 FIFO 满，寄存器将被覆盖",
 				$time, phase);
 			$display("                    丢失 pc=%h %h | R0=%0d W0=%0d fifoWvalid=0 已写 pw=%0d 已取 pr=%0d",
 				dut.instr[0].data.pc, dut.instr[1].data.pc, dut.fifoR0, dut.fifoW0, pw, pr);
 			$fatal(1);
 		end
-		if (dut.pipeReady && pw < n && if2.instr[0].valid != Id1Valid_Idle)
+		if (if2.ready && pw < n && if2.instr[0].valid != Id1Valid_Idle)
 			pw += (pw + 1 < n && if2.instr[1].valid != Id1Valid_Idle) ? 2 : 1;
 		// 消费指针按 DUT 的实际推进量走（含 have2 钳位）：consume[1] 但没有第二条时只前进 1
 		if (id1.instr[0].valid != Id1Valid_Idle) begin
@@ -109,9 +109,9 @@ module tb;
 	end
 
 	task automatic run(input int p, input int cnt, input int b_at, input int s_at,
-	                   input int o_at, input int r_at);
+	                   input int o_at, input int r_at, input int f_at);
 		phase = p; n = cnt; pw = 0; pr = 0; cyc = 0;
-		bub_at = b_at; stall_at = s_at; one_at = o_at; rst_at = r_at;
+		bub_at = b_at; stall_at = s_at; one_at = o_at; rst_at = r_at; fl_at = f_at;
 		for (int i = 0; i < n; i++) begin
 			ins[i] = 32'h0000_0093 | ((i & 255) << 20);
 			pcv[i] = 30'(32'h1000_0000 + i);
@@ -120,6 +120,32 @@ module tb;
 		repeat (2) @(posedge clk);
 		@(negedge clk); rst = 0;
 		while (pr < n && cyc < 4000) begin
+			if (fl_at > 0 && cyc == fl_at) begin
+				id1.flush = 1'b1;
+				@(posedge clk); #1;
+				if (if2.flush !== 1'b1) begin
+					$display("FAIL[t=%0t phase=%0d] flush 未转发给 IF2", $time, phase);
+					$fatal(1);
+				end
+				if (id1.instr[0].valid != Id1Valid_Idle) begin
+					$display("FAIL[t=%0t phase=%0d] flush 后输出未清空：pc=%h",
+						$time, phase, id1.instr[0].data.pc);
+					$fatal(1);
+				end
+				if (dut.fifoR0 !== dut.fifoW0) begin
+					$display("FAIL[t=%0t phase=%0d] flush 后 R0(%0d) 应等于 W0(%0d)",
+						$time, phase, dut.fifoR0, dut.fifoW0);
+					$fatal(1);
+				end
+				if (dut.instr[0].valid != Id1Valid_Idle || dut.instr[1].valid != Id1Valid_Idle) begin
+					$display("FAIL[t=%0t phase=%0d] flush 后输入寄存器未清空", $time, phase);
+					$fatal(1);
+				end
+				@(negedge clk);
+				id1.flush = 1'b0;
+				pr = pw;          // FIFO 被清空，未消费的部分按丢弃处理
+				fl_at = 0;
+			end
 			if (rst_at > 0 && cyc == rst_at) begin
 				rst = 1'b1;
 				repeat (2) @(posedge clk);
@@ -142,15 +168,16 @@ module tb;
 	initial begin
 		$dumpfile("build/wave/ifb.fst");
 		$dumpvars(0, tb);
-		run(1, 32, 0,  0, 0, 0);   // 恒取 2
-		run(2, 32, 0,  0, 0, 0);   // 周期性停顿
-		run(3, 48, 0,  0, 0, 0);   // 混合 1/2/0
-		run(4, 32, 6,  0, 0, 0);   // IF2 中途空包
-		run(5, 48, 0,  6, 0, 0);   // 下游长停顿，写满 FIFO
-		run(6, 15, 0,  0, 0, 0);   // 奇数条：尾包只有 1 条
-		run(7, 33, 0,  0, 8, 0);   // 中途只给 1 条（槽1 无效）
-		run(8, 24, 0,  0, 0, 10);  // 运行中途复位
-		run(9, 17, 0,  0, 0, 0);   // 奇数条 + 恒取 2
+		run(1, 32, 0,  0, 0, 0, 0);   // 恒取 2
+		run(2, 32, 0,  0, 0, 0, 0);   // 周期性停顿
+		run(3, 48, 0,  0, 0, 0, 0);   // 混合 1/2/0
+		run(4, 32, 6,  0, 0, 0, 0);   // IF2 中途空包
+		run(5, 48, 0,  6, 0, 0, 0);   // 下游长停顿，写满 FIFO
+		run(6, 15, 0,  0, 0, 0, 0);   // 奇数条：尾包只有 1 条
+		run(7, 33, 0,  0, 8, 0, 0);   // 中途只给 1 条（槽1 无效）
+		run(8, 24, 0,  0, 0, 10, 0);  // 运行中途复位
+		run(9, 17, 0,  0, 0, 0, 0);   // 奇数条 + 恒取 2
+		run(10, 32, 0, 0, 0, 0, 8);   // 运行中途 flush
 		phase = 0;
 		repeat (2) @(negedge clk);
 		$display("tb: OK（波形 build/wave/ifb.fst）");

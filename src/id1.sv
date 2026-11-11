@@ -104,8 +104,9 @@ module Id1(
 );
 	PipeInstr [1:0] instr;
 	logic pipeReady;
-	always_ff@(posedge clk)if(pipeReady||rst)instr[0].valid<=rst?Id1Valid_Idle:(ifb.consume[1]?ifb.instr[0].valid:instr[1].valid);
-	always_ff@(posedge clk)if(pipeReady||rst)instr[1].valid<=rst?Id1Valid_Idle:(ifb.consume[1]?ifb.instr[1].valid:ifb.instr[0].valid);
+	assign ifb.flush = id2.flush;
+	always_ff@(posedge clk)if(pipeReady || rst || id2.flush)instr[0].valid<=(rst || id2.flush)?Id1Valid_Idle:(ifb.consume[1]?ifb.instr[0].valid:instr[1].valid);
+	always_ff@(posedge clk)if(pipeReady || rst || id2.flush)instr[1].valid<=(rst || id2.flush)?Id1Valid_Idle:(ifb.consume[1]?ifb.instr[1].valid:ifb.instr[0].valid);
 	always_ff@(posedge clk)if(pipeReady)instr[0].data <= ifb.consume[1]?ifb.instr[0].data:instr[1].data;
 	always_ff@(posedge clk)if(pipeReady)instr[1].data <= ifb.consume[1]?ifb.instr[1].data:ifb.instr[0].data;
 	Id1Full id1Full(instr[0],id2.dataFull);

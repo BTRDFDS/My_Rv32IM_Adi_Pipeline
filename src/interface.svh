@@ -22,23 +22,24 @@ endinterface : ImmeData
 
 interface PipeIf2Ifb;
 	PipeInstr [1:0]instr;
-	logic ready;
-	modport Ifb( input instr,output ready);
-	modport If1(output instr, input ready);
+	logic ready,flush;
+	modport Ifb( input instr,output ready,flush);
+	modport If1(output instr, input ready,flush);
 endinterface : PipeIf2Ifb
 interface PipeIfbId1;
 	PipeInstr [1:0]instr;
 	// Id1Ready ready;
 	logic [1:0] consume;
-	modport Id1( input instr,output consume);
-	modport Ifb(output instr, input consume);
+	logic flush;
+	modport Id1( input instr,output consume,flush);
+	modport Ifb(output instr, input consume,flush);
 endinterface : PipeIfbId1
 interface PipeId1Id2;
 	PipeId1Full dataFull;
 	PipeId1Lite dataLite;
-	logic ready;
-	modport Id2( input dataFull,dataLite,output ready);
-	modport Id1(output dataFull,dataLite, input ready);
+	logic ready,flush;
+	modport Id2( input dataFull,dataLite,output ready,flush);
+	modport Id1(output dataFull,dataLite, input ready,flush);
 endinterface : PipeId1Id2
 interface PipeId2Ex1;
 	PipeId2Full dataFull;
@@ -52,8 +53,9 @@ interface PipeId2Ex1;
 	logic [1:0][31:0]r2Data;
 	logic [11:0]csrAddr;
 	logic [31:0]csrData;
-	modport Ex1( input dataFull,dataLite,r1Addr,r2Addr,csrAddr,output ready,r1Valid,r2Valid,r1Data,r2Data,csrData);
-	modport Id2(output dataFull,dataLite,r1Addr,r2Addr,csrAddr, input ready,r1Valid,r2Valid,r1Data,r2Data,csrData);
+	logic flush;
+	modport Ex1( input dataFull,dataLite,r1Addr,r2Addr,csrAddr,output ready,flush,r1Valid,r2Valid,r1Data,r2Data,csrData);
+	modport Id2(output dataFull,dataLite,r1Addr,r2Addr,csrAddr, input ready,flush,r1Valid,r2Valid,r1Data,r2Data,csrData);
 endinterface : PipeId2Ex1
 
 `endif

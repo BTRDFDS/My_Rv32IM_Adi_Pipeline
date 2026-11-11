@@ -14,6 +14,8 @@ lint:
 	$(VERILATOR) --lint-only $(LINTFLAGS) $(INC) --top-module Id1Full $(SRC)/id1.sv
 	$(VERILATOR) --lint-only $(LINTFLAGS) $(INC) --top-module Id1Lite $(SRC)/id1.sv
 	$(VERILATOR) --lint-only $(LINTFLAGS) $(INC) --top-module Id1     $(SRC)/id1.sv
+	$(VERILATOR) --lint-only --timing -Wall -Wno-DECLFILENAME -Wno-PROCASSINIT -Wno-BLKSEQ -Wno-UNUSEDSIGNAL $(INC) --top-module tb tb.sv $(SRC)/id1.sv
+
 
 $(BUILD):
 	mkdir -p $(BUILD)
