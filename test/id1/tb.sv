@@ -224,6 +224,19 @@ module tb;
 			end
 		end
 
+		// ===== 编码边界：移位立即数 shamt[5]=1（RV32 非法）=====
+		phase = 5;
+		fin.valid = Id1Valid_Valid; fin.data.instr = 32'h0200_1093; #1;   // SLLI, instr[25]=1
+		chk(fout.data.imm === Id2Imm_E, "SLLI shamt[5]=1 应判为非法（imm=E）",
+		    $sformatf("imm=%b", fout.data.imm));
+		lin.valid = Id1Valid_Valid; lin.data.instr = 32'h0200_1093; #1;
+		chk(lout.valid === 1'b0, "lite 不应接受 shamt[5]=1 的 SLLI",
+		    $sformatf("lite.valid=%b", lout.valid));
+		phase = 6;
+		fin.valid = Id1Valid_Valid; fin.data.instr = 32'h4200_1093; #1;   // SLLI funct7=0100000
+		chk(fout.data.imm === Id2Imm_E, "SLLI funct7=0100000 应判为非法",
+		    $sformatf("imm=%b", fout.data.imm));
+
 		// ===== 流水：空 → 装一对 =====
 		phase = 10;
 		id2.ready = 1'b1;
@@ -312,6 +325,28 @@ module tb;
 		qi[6]=32'h0000_0093; qp[6]=30'(32'h0F00_0006);
 		qi[7]=32'h0000_0033; qp[7]=30'(32'h0F00_0007);
 		loadq(23, 8);  repeat (10) @(negedge clk);
+
+		// ===== 场景 5：只有一条指令（IFB 槽1 为空）=====
+		phase = 24;
+		qi[0] = 32'h0000_0033; qp[0] = 30'h1080;
+		loadq(24, 1);
+		@(negedge clk); #1;
+		chk(ifb.consume[1] === 1'b1, "单条：空寄存器应 consume=1x",
+		    $sformatf("consume=%b", ifb.consume));
+		chk(dut.instr[0].data.pc === 30'h1080 && dut.instr[1].valid === Id1Valid_Idle,
+		    "单条：应装入 (I, Idle)",
+		    $sformatf("槽0 pc=%h v1=%b", dut.instr[0].data.pc, dut.instr[1].valid));
+		@(posedge clk); #1;
+		chk(dut.instr[0].valid === Id1Valid_Idle, "单条：发射后寄存器应清空",
+		    $sformatf("v0=%b", dut.instr[0].valid));
+		chk(rd === 1, "单条：IFB 只应前进 1", $sformatf("rd=%0d", rd));
+
+		// ===== 场景 6：奇数条（尾包只有 1 条）=====
+		phase = 25;
+		for (int i = 0; i < 7; i++) begin
+			qi[i] = 32'h0000_0033 | ((i & 31) << 20); qp[i] = 30'(32'h1100_0000 + i);
+		end
+		loadq(25, 7);  repeat (8) @(negedge clk);
 
 		phase = 0;
 		repeat (2) @(negedge clk);

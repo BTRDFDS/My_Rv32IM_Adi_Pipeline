@@ -82,7 +82,7 @@ module tb;
 		phase = 4;
 		setpkt(32'h0053_0293, Id2Imm_I, 1'b1, 1'b0, 1'b1, 1'b1);
 		i12.dataLite.valid = 1'b1;
-		i12.dataLite.instr = 25'h1;
+		i12.dataLite.instr = (25'd5 << 8);
 		i12.dataLite.data  = '0;
 		waitclk();
 		chk(i2x.dataLite.valid === 1'b0, "槽0 未就绪时 lite 不得发射",
@@ -137,6 +137,60 @@ module tb;
 		waitclk();
 		chk(i2x.dataFull.data.imm === 32'h0000_0010, "B 型立即数错误",
 		    $sformatf("imm=%h 期望 10", i2x.dataFull.data.imm));
+
+		// 10) U 型：LUI x1, 0x12345 -> imm = 0x12345000
+		phase = 10;
+		setpkt(32'h1234_50B7, Id2Imm_U, 1'b0, 1'b0, 1'b1, 1'b1);
+		waitclk();
+		chk(i2x.dataFull.data.imm === 32'h1234_5000, "U 型立即数错误",
+		    $sformatf("imm=%h 期望 12345000", i2x.dataFull.data.imm));
+
+		// 11) J 型：JAL x0, 16 -> imm = 0x10
+		phase = 11;
+		setpkt(32'h0100_006F, Id2Imm_J, 1'b0, 1'b0, 1'b0, 1'b1);
+		waitclk();
+		chk(i2x.dataFull.data.imm === 32'h0000_0010, "J 型立即数错误",
+		    $sformatf("imm=%h 期望 10", i2x.dataFull.data.imm));
+
+		// 12) CSR：csrrw x1, 0x300, x2 -> csrAddr=0x300，imm 取 csrData
+		phase = 12;
+		setpkt(32'h3001_10F3, Id2Imm_C, 1'b1, 1'b0, 1'b1, 1'b1);
+		i12.dataFull.data.csr    = Ex1Csr_W;      // 模拟 ID1 的译码结果
+		i12.dataFull.data.wbuCsr = WbuCsrOp_Write;
+		repeat (2) waitclk();
+		// 注：ex1.csrAddr 目前 Id2 未驱动（接口声明为 Id2 输出），等 RTL 补上后再加检查
+		chk(i2x.dataFull.data.imm === 32'hdead_beef, "CSR 指令的 imm 应取 csrData",
+		    $sformatf("imm=%h 期望 deadbeef", i2x.dataFull.data.imm));
+
+		chk(i2x.dataFull.data.csr === Ex1Csr_W, "CSRRW 的 csr 操作码错误",
+		    $sformatf("csr=%b 期望 %b", i2x.dataFull.data.csr, Ex1Csr_W));
+		chk(i2x.dataFull.data.wbuCsr === WbuCsrOp_Write, "CSRRW 的 wbuCsr 错误",
+		    $sformatf("wbuCsr=%b 期望 %b", i2x.dataFull.data.wbuCsr, WbuCsrOp_Write));
+
+		// 14) ECALL：wbuCsr 必须是 Trap
+		phase = 14;
+		setpkt(32'h0000_0073, Id2Imm_T, 1'b0, 1'b0, 1'b0, 1'b1);
+		i12.dataFull.data.wbuCsr = WbuCsrOp_Trap; // 模拟 ID1 的译码结果
+		repeat (2) waitclk();
+		chk(i2x.dataFull.data.wbuCsr === WbuCsrOp_Trap, "ECALL 的 wbuCsr 错误",
+		    $sformatf("wbuCsr=%b 期望 Trap", i2x.dataFull.data.wbuCsr));
+
+		// 13) 槽1 旁路：r1Valid=2'b10（只有 lite 级就绪）-> lite 的 r1 取 r1Data[1]
+		phase = 13;
+		i2x.r1Valid = 2'b11;   // 两级都就绪；槽1 必须取 r1Data[1] 而不是 [0]
+		setpkt(32'h0053_0293, Id2Imm_I, 1'b1, 1'b0, 1'b1, 1'b1);   // lite 需要 full 也在
+		i12.dataLite.valid = 1'b1;
+		i12.dataLite.instr = (25'd5 << 8);
+		i12.dataLite.data  = '0;
+		i12.dataLite.data.r1 = 1'b1;
+		repeat (2) waitclk();   // lite 槽在 Id2 内部有寄存器，多等一拍
+		chk(i2x.dataLite.data.r1 === 32'h5555_6666, "槽1 旁路数据错误",
+		    $sformatf("r1=%h 期望 55556666 | r1Addr1=%0d r1Valid=%b r1Data1=%h lite.r1=%b instr=%h",
+			i2x.dataLite.data.r1, i2x.r1Addr[1], i2x.r1Valid, i2x.r1Data[1],
+			i12.dataLite.data.r1, i12.dataLite.instr));
+		chk(i2x.dataLite.valid === 1'b1, "槽1 应能发射", $sformatf("valid=%b", i2x.dataLite.valid));
+		i2x.r1Valid = 2'b11;
+		i12.dataLite = '0;
 
 		phase = 0;
 		repeat (2) @(negedge clk);
