@@ -22,7 +22,7 @@ endinterface : ImmeData
 
 interface PipeIf2Ifb;
 	PipeInstr [1:0]instr;
-	Id1Ready ready;
+	logic ready;
 	modport Ifb( input instr,output ready);
 	modport If1(output instr, input ready);
 endinterface : PipeIf2Ifb

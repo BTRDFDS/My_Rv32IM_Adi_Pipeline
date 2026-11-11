@@ -111,6 +111,6 @@ module Id1(
 	Id1Full id1Full(instr[0],id2.dataFull);
 	Id1Lite id1Lite(instr[1],id2.dataLite);
 	assign pipeReady		= (instr[0].valid==Id1Valid_Idle && instr[1].valid==Id1Valid_Idle) || id2.ready;
-	assign ifb.consume[0]	= pipeReady;//id2.ready && (instr[1].valid!=Id1Valid_Idle) && !id2.dataLite.valid;
+	assign ifb.consume[0]	= pipeReady;
 	assign ifb.consume[1]	= (instr[0].valid==Id1Valid_Idle && instr[1].valid==Id1Valid_Idle) ||(id2.ready && !((instr[1].valid!=Id1Valid_Idle) && !id2.dataLite.valid));
 endmodule
