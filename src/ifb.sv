@@ -1,4 +1,5 @@
 `include "interface.svh"
+`define DEBUG
 module ifb (
     input logic clk,rst,
     PipeIf2Ifb.Ifb if2,
@@ -6,8 +7,8 @@ module ifb (
 );
     PipeInstr [1:0] instr;
     logic pipeReady;
-    always_ff @(posedge clk)if(rst || pipeReady)instr[0].valid  <= if2.instr[0].valid;
-    always_ff @(posedge clk)if(rst || pipeReady)instr[1].valid  <= if2.instr[1].valid;
+    always_ff @(posedge clk)if(rst || pipeReady)instr[0].valid  <= rst?Id1Valid_Idle:if2.instr[0].valid;
+    always_ff @(posedge clk)if(rst || pipeReady)instr[1].valid  <= rst?Id1Valid_Idle:if2.instr[1].valid;
     always_ff @(posedge clk)if(rst || pipeReady)instr[0].data   <= if2.instr[0].data;
     always_ff @(posedge clk)if(rst || pipeReady)instr[1].data   <= if2.instr[1].data;
 
@@ -30,7 +31,7 @@ module ifb (
     logic fifoWvalid;
     assign fifoWvalid = fifo[fifoW0].valid==Id1Valid_Idle && fifo[fifoW1].valid==Id1Valid_Idle;
     always_ff @(posedge clk)begin
-        if(rst) for(int i=0;i<8;i++)fifo[i].valid=Id1Valid_Idle;
+        if(rst)foreach(fifo[i])fifo[i].valid<=Id1Valid_Idle;
         else begin
             if(id1.consume[0])fifo[fifoR0].valid<=Id1Valid_Idle;
             if(id1.consume[1])fifo[fifoR1].valid<=Id1Valid_Idle;
@@ -40,9 +41,13 @@ module ifb (
             end
         end
     end
-    assign pipeReady = (instr[0].valid!=Id1Valid_Idle && instr[1].valid!=Id1Valid_Idle) || !fifoWvalid;
+    assign pipeReady = (instr[0].valid==Id1Valid_Idle && instr[1].valid==Id1Valid_Idle) || fifoWvalid;
+    assign if2.ready = pipeReady;
     always_ff @(posedge clk) begin
         if(rst) fifoW0 <= 0;
         else if(fifoWvalid && instr[0].valid!=Id1Valid_Idle) fifoW0 <= instr[1].valid!=Id1Valid_Idle ? fifoW2 : fifoW1;
     end
+`ifdef DEBUG
+    logic debug_fifoValid[7:0];always_comb foreach(fifo[i])debug_fifoValid[i] = fifo[i].valid!=Id1Valid_Idle;
+`endif
 endmodule
