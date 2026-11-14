@@ -20,7 +20,7 @@ module wbu (
 	assign immeData.dataWbu.rd[0]		= rd[0].data;
 	assign immeData.dataWbu.rd[1]		= rd[1].data;
 	assign immeData.dataWbu.sr			= sr.srData;
-	assign immeData.dataWbu.valod		= '1;
+	assign immeData.dataWbu.valid		= '1;
 	assign immeData.dataWbu.hit[0][0]	= immeData.addr[0][0]==rd[0].addr;
 	assign immeData.dataWbu.hit[0][1]	= immeData.addr[0][1]==rd[1].addr;
 	assign immeData.dataWbu.hit[1][0]	= immeData.addr[1][0]==rd[0].addr;
@@ -30,5 +30,5 @@ module wbu (
 	assign immeData.dataGprs.r1[1]	= gpr[immeData.addr[1][0]];
 	assign immeData.dataGprs.r2[0]	= gpr[immeData.addr[0][1]];
 	assign immeData.dataGprs.r2[1]	= gpr[immeData.addr[1][1]];
-	// assign immeData.dataGprs.sr		= //TODO
+	// assign immeData.dataGprs.sr		= //TODO :还没定要怎么索引
 endmodule
